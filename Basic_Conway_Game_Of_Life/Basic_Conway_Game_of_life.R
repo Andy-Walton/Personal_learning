@@ -27,7 +27,7 @@ evaluate_neighbours <- function(grid, x, y, grid_size){
 
 }
 
-modify_cells <- function(grid, grid_size){
+modify_cells_conway <- function(grid, grid_size){
     
   new_grid <- grid
   
@@ -40,25 +40,84 @@ modify_cells <- function(grid, grid_size){
   new_grid
 }
 
-simulate_cells_gif <- function(G, grid_size){
+modify_cells_day_night <- function(grid, grid_size){
+  
+  new_grid <- grid
+  
+  for (x in 1:nrow(grid)) {
+    for (y in 1:ncol(grid)) {
+      neighbours <- evaluate_neighbours(grid, x, y, grid_size)
+      new_grid[x, y] <- ifelse(
+        grid[x, y] == 1,
+        ifelse(neighbours %in% c(3, 4, 6, 7, 8), 1, 0),
+        ifelse(neighbours %in% c(3, 6, 7, 8), 1, 0)
+      )
+      
+    }
+  }
+  new_grid
+}
+
+modify_cells_maze <- function(grid, grid_size){
+  
+  new_grid <- grid
+  
+  for (x in 1:nrow(grid)) {
+    for (y in 1:ncol(grid)) {
+      neighbours <- evaluate_neighbours(grid, x, y, grid_size)
+      new_grid[x, y] <- ifelse(
+        grid[x, y] == 1,
+        ifelse(neighbours %in% 1:5, 1, 0),
+        ifelse(neighbours == 3, 1, 0)
+      )
+    }
+  }
+  new_grid
+}
+
+simulate_cells_gif <- function(G, grid_size, rule = NULL){
   grid <- create_population(grid_size)
   imgs <- list()
   
-  for (g in 1:G){
-    png_filename <- sprintf("frame%03d.png", g)
-    png(png_filename, width=400, height=400)
-    par(mar=c(0,0,0,0))
-    image(t(apply(grid, 2, rev)), col=c("black", "white"), axes=FALSE)
-    dev.off()
-    
-    imgs[[g]] <- image_read(png_filename)
-    grid <- modify_cells(grid, grid_size)
-  }
-  
+  if (rule == "day_night"){
+    for (g in 1:G){
+      png_filename <- sprintf("frame%03d.png", g)
+      png(png_filename, width=400, height=400)
+      par(mar=c(0,0,0,0))
+      image(t(apply(grid, 2, rev)), col=c("black", "white"), axes=FALSE)
+      dev.off()
+      
+      imgs[[g]] <- image_read(png_filename)
+      grid <- modify_cells_day_night(grid, grid_size)
+    }
+  } else if (rule == "maze"){
+    for (g in 1:G){
+      png_filename <- sprintf("frame%03d.png", g)
+      png(png_filename, width=400, height=400)
+      par(mar=c(0,0,0,0))
+      image(t(apply(grid, 2, rev)), col=c("black", "white"), axes=FALSE)
+      dev.off()
+      
+      imgs[[g]] <- image_read(png_filename)
+      grid <- modify_cells_maze(grid, grid_size)
+    }
+    } else {
+    for (g in 1:G){
+      png_filename <- sprintf("frame%03d.png", g)
+      png(png_filename, width=400, height=400)
+      par(mar=c(0,0,0,0))
+      image(t(apply(grid, 2, rev)), col=c("black", "white"), axes=FALSE)
+      dev.off()
+      
+      imgs[[g]] <- image_read(png_filename)
+      grid <- modify_cells_conway(grid, grid_size)
+    }
+    }
+
   animation <- image_animate(image_join(imgs), fps = 10)
   image_write(animation, "automaton.gif")
 }
 
 ### Simulate ----
 
-simulate_cells_gif(200, 100)
+simulate_cells_gif(1000, 100, rule="day_night")
